@@ -1,46 +1,23 @@
-# AMD
+# AMD Prediction
 
-# Hadasa
-Send cluster bid
-Do we have shared memory for the files?
+# Data
+The data exists on the school servers in the address:
+/cs/labs/dina/seanco/hadassah/OCT_output/pre_process
 
+# Model:
+All the files I wrote are here in git.
+The complete project is in:
+/cs/labs/dina/seanco/hadassah/dl_project/AMD
 
-# ideas:
-Add labels to unlabeled data by checking if the first and the last are labeled the same
-Check similarity between different oct scans in order to label them?
+# Pre-trained models:
+Available in Timesformer github.
 
-# Questions
-Data:
-How do I use all the oct slices?
-How do I use less than 8/16 slices? start simple
-How do I use parital labeled data? only last, 
-Should we predict improvment and worsening?
-Augmentations - resize and crop (224, 448), rotating in small angle, cut mix 
-simclr augmentation
+# Trained Models
+One can find my trained models for AMD prediction in checkpoints directory.
+Each checkpoint can be load through the config files.
 
-Model:
-Model training - change the training code? or traing the model to different task? rot net/image inpaiting/Puzzle
-Should we use single MLP or multiple MLPs for the multi-output classification?
-Should we change the final linear layer to more complex layer?
-
-# Next things 
-How to handle mislabeled data?
-
-# TODO
-Extract data info
-write model
-write training function - 
-    build trainer - model, optimizer, train_loader, val_loader,
-    train, train epoch, eval epoch
-
-# Data errors
-AIA 03775 labeled several times
-
-
-# Problematic data proccessing
-AIA 03332 OD 03.12.2017
-
-
-download pretrained model
-configs 
-timesformer -> models -> vit
+# Installation:
+To use the code one need to follow the installation instructions in Timesformer github from facebook:
+https://github.com/facebookresearch/TimeSformer
+Few packages are used in addition:
+requirements.txt file is supplied
