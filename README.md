@@ -16,7 +16,8 @@ The complete project is in school computers:
 Available in Timesformer github.
 
 # Trained Models
-One can find my trained models for AMD prediction in checkpoints directory.
+One can find my trained models for AMD prediction in checkpoints directory in school server:  
+/cs/labs/dina/seanco/hadassah/dl_project/AMD/models/checkpoint
 Each checkpoint can be load through the config files.
 
 # Installation:
@@ -24,3 +25,7 @@ To use the code one need to follow the installation instructions in Timesformer 
 https://github.com/facebookresearch/TimeSformer
 Few packages are used in addition:
 requirements.txt file is supplied
+
+# Training
+One can run training session by calling train.py with the desired config file. for example  
+python3 <proj_path>/train.py --cfg <proj_path>/configs/VIT_8x224_simple_run.yaml 
