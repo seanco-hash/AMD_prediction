@@ -2,11 +2,14 @@
 
 # Data
 The data exists on the school servers in the address:
-/cs/labs/dina/seanco/hadassah/OCT_output/pre_process
+/cs/labs/dina/seanco/hadassah/
+The folder OCT_output consists the data after conversion on e2e files to .png.
+the folder OCT_output/pre_process consists images after croping and centering.
+The original e2e files from Hadassah exists on external drive.
 
 # Model:
 All the files I wrote are here in git.
-The complete project is in:
+The complete project is in school computers:  
 /cs/labs/dina/seanco/hadassah/dl_project/AMD
 
 # Pre-trained models:
