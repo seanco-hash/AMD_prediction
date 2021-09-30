@@ -1,18 +1,18 @@
 TRAIN:
   ENABLE: True
   DATASET: AMD
-  BATCH_SIZE: 8
+  BATCH_SIZE: 64
   EVAL_PERIOD: 2
   CHECKPOINT_PERIOD: 5
   AUTO_RESUME: True
   EPOCHS: 16
   DEBUG: False
-  HPARAM_TUNE: False
+  HPARAM_TUNE: True
 DATA:
   PATH_TO_DATA_DIR: /cs/labs/dina/seanco/hadassah/OCT_output/pre_process
   ANNOTATION_PATH: /cs/labs/dina/seanco/hadassah/dl_project/AMD/annotations.csv
-  NUM_FRAMES: 96
-  SAMPLING_RATE: 4
+  NUM_FRAMES: 8
+  SAMPLING_RATE: 32
   TRAIN_JITTER_SCALES: [256, 320]
   TRAIN_CROP_SIZE: 224
   TEST_CROP_SIZE: 224
@@ -21,7 +21,7 @@ DATA:
 TIMESFORMER:
   ATTENTION_TYPE: space_only
 SOLVER:
-  BASE_LR: 0.001
+  BASE_LR: 0.005
   LR_POLICY: steps_with_relative_lrs
   STEPS: [0, 5, 12, 19]
   LRS: [1, 0.2, 0.1, 0.01]
@@ -30,30 +30,30 @@ SOLVER:
   WEIGHT_DECAY: 1e-4
   OPTIMIZING_METHOD: sgd
 MODEL:
-  MODEL_NAME: TIMESFORMER_L
+  MODEL_NAME: VIT_8x224_Linear
   NUM_CLASSES: 2
   ARCH: vit
   LOSS_FUNC: cross_entropy
   LOSS_CLASS_WEIGHT: False
   DROPOUT_RATE: 0.5
-  PRETRAINED_PATH: /cs/labs/dina/seanco/hadassah/dl_project/AMD/pretrained/TimeSformer_divST_96x4_224_K400.pyth
+  PRETRAINED_PATH: /cs/labs/dina/seanco/hadassah/dl_project/AMD/pretrained/TimeSformer_divST_8x32_224_K400.pyth
   FINETUNE: TRUE
-  FINETUNE_PERCENT: 0.9
+  FINETUNE_PERCENT: 0.4
   NUM_FEATURES_TO_PREDICT: 1
   USE_CHECKPOINT: False
-  CHECKPOINT_NAME: VIT_TIMESFORME_L
+  CHECKPOINT_NAME: VIT_8X224_regular_0.4_random
 TEST:
   ENABLE: True
   DATASET: AMD
-  BATCH_SIZE: 8
+  BATCH_SIZE: 64
   NUM_ENSEMBLE_VIEWS: 1
   NUM_SPATIAL_CROPS: 3
   TEST_OR_VALIDATION: validation
 DATA_LOADER:
-  NUM_WORKERS: 8
+  NUM_WORKERS: 1
   PIN_MEMORY: True
   INTERPOLATE_DATA: True
-  METHOD: all
+  METHOD: mid slices
   ORDERED: True
   TRANSFORMS: rescale
   MEAN: [ 0.0782, 0.0782, 0.0782 ]

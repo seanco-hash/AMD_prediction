@@ -249,7 +249,7 @@ class OCTDataset(Dataset):
         """
         Frame picking heuristic
         """
-        if cfg.DATA_LOADER.METHOD == "8 mid slices" or cfg.DATA_LOADER.METHOD == "16 mid slices":
+        if cfg.DATA_LOADER.METHOD == "mid slices" or cfg.DATA_LOADER.METHOD == "16 mid slices":
             return self._get_mid_slices
         elif cfg.DATA_LOADER.METHOD == "grouped":
             return self._get_grouped_slices

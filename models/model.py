@@ -3,10 +3,6 @@ from timesformer.models.vit import TimeSformer
 import torch
 
 
-NUM_CLASSES = 2
-EMBED_DIM = 768
-
-
 class OCTVIT(TimeSformer):
 
     def __init__(self, img_size=224, patch_size=16, num_classes=2, num_frames=8, attention_type='space',
@@ -27,21 +23,7 @@ class OCTVIT(TimeSformer):
         for param in self.model.head.parameters():
             param.requires_grad = True
 
-        self.model.heads = [
-            self.model.head
-            # torch.nn.Linear(EMBED_DIM, 3),  # AMD STAGE
-            # torch.nn.Linear(EMBED_DIM, 1),   # DRUSEN
-            # torch.nn.Linear(EMBED_DIM, 1),   # SDD
-            # torch.nn.Linear(EMBED_DIM, 1),   # PED
-            # torch.nn.Linear(EMBED_DIM, 1),   # SCAR
-            # torch.nn.Linear(EMBED_DIM, 1),   # SRHEM
-            # torch.nn.Linear(EMBED_DIM, 1),   # IRF
-            # torch.nn.Linear(EMBED_DIM, 1),   # SRF
-            # torch.nn.Linear(EMBED_DIM, 1),   # IRORA
-            # torch.nn.Linear(EMBED_DIM, 13),  # IRORA location
-            # torch.nn.Linear(EMBED_DIM, 1),   # CRORA
-            # torch.nn.Linear(EMBED_DIM, 13),  # cRORA location
-        ]
+        self.model.heads = [self.model.head]
         self.model.heads = torch.nn.ModuleList(self.model.heads)
 
 
@@ -54,10 +36,8 @@ class VITSmallLinear(OCTVIT):
                                              pretrained_model, finetune, finetune_percent, **kwargs)
 
     def forward(self, x):
-        # print("\tIn Model: input size", x.size())
         x = self.model.forward_features(x)
         x = [self.model.heads[i](x) for i in range(len(self.model.heads))]
-        # print("\toutput size", x[0].size())
         return x
 
 

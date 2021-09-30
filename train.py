@@ -136,7 +136,8 @@ def train_epoch(model, train_loader, criteria, optimizer, epoch, train_loss, epo
     losses = np.zeros(num_features_to_predict, dtype=np.float128)
 
     # Go over all the data, tqdm - progress bar
-    data_loader = tqdm(train_loader, position=0, leave=True)
+    # data_loader = tqdm(train_loader, position=0, leave=True)
+    data_loader = train_loader
     for i, data in enumerate(data_loader, 0):
         # Get the current batch
         inputs, labels = data
@@ -164,8 +165,8 @@ def train_epoch(model, train_loader, criteria, optimizer, epoch, train_loss, epo
         optimizer.step()
         running_loss += loss.item()
 
-        # Print statistics.
-        data_loader.set_postfix({'loss': loss.item()})
+        # For prgress bar
+        # data_loader.set_postfix({'loss': loss.item()})
         if (i + 1) % 20 == 0:
             running_loss /= 20
             print(f"[Train] Epoch: {epoch} Batch: {i+1} Loss: {running_loss:.3f}")
@@ -192,9 +193,9 @@ def plot_roc_curve(fpr, tpr, auc, cfg, i=0):
     plt.legend(loc="lower right")
     out_dir = '/cs/labs/dina/seanco/hadassah/dl_project/AMD/plots/'
     fig_name = out_dir + cfg.MODEL.CHECKPOINT_NAME + '_roc_' + str(i) + '.png'
-    plt.show(fig_name)
+    plt.show()
 
-    plt.savefig('roc_curve')
+    plt.savefig(fig_name)
 
 
 def calc_precision_recall_roc(confusion_matrix, n_classes, pred_prob, true_y, cfg, i):
@@ -285,7 +286,8 @@ def eval_epoch(model, val_loader, criteria, epoch, val_loss, val_acc, num_feat_t
         losses = np.zeros(num_feat_to_pred, dtype=np.float128)
         eval_acc = np.zeros(num_feat_to_pred, dtype=np.float128)
 
-        data_loader = tqdm(val_loader, position=0, leave=True)
+        # data_loader = tqdm(val_loader, position=0, leave=True)
+        data_loader = val_loader
         for data in data_loader:
             # Get the current batch
             inputs, labels = data
@@ -314,7 +316,7 @@ def eval_epoch(model, val_loader, criteria, epoch, val_loss, val_acc, num_feat_t
                 loss += cur_loss
 
             # Print statistics.
-            data_loader.set_postfix({'loss': loss.item(), "Epoch": epoch})
+            # data_loader.set_postfix({'loss': loss.item(), "Epoch": epoch})
 
         losses = losses / len(val_loader)
         eval_acc = eval_acc / len(val_loader)
@@ -365,25 +367,30 @@ def write_hparams(writer, cfg, loss, tot_acc, acc_per_class, auc, recall, precis
     """
     Write hyper parameters into tensorboard
     """
-    pretrained = cfg.MODEL.PRETRAINED_PATH
-    pretrained = pretrained.split('/')[-1]
-    writer.add_hparams({'optimizer': cfg.SOLVER.OPTIMIZING_METHOD,
+    # pretrained = cfg.MODEL.PRETRAINED_PATH
+    # pretrained = pretrained.split('/')[-1]
+    hparams_dict = {'optimizer': cfg.SOLVER.OPTIMIZING_METHOD,
                         'base lr': cfg.SOLVER.BASE_LR, 'decay': cfg.SOLVER.WEIGHT_DECAY,
                         'transforms': cfg.DATA_LOADER.TRANSFORMS, 'class weight': cfg.MODEL.LOSS_CLASS_WEIGHT,
                         'finetune percent': cfg.MODEL.FINETUNE_PERCENT,
                         'slice pick': cfg.DATA_LOADER.METHOD,
                         'feature': cfg.TARGET_FEATURE,
-                        'model name': cfg.MODEL.MODEL_NAME},
-                       {'hparam/loss': loss,
+                        'model name': cfg.MODEL.MODEL_NAME}
+    metrics_dict = {'hparam/loss': loss,
                         'hparam/accuracy': tot_acc,
                         'hparam/acc_class_0': acc_per_class[0],
                         'hparam/acc_class_1': acc_per_class[1],
                         'hparam/AUC': auc,
                         'hparam/recall': recall,
-                        'hparam/precision': precision})
+                        'hparam/precision': precision}
+    writer.add_hparams(hparams_dict, metrics_dict)
+    print(hparams_dict)
+    print(metrics_dict)
+    print(cfg.TRAIN.EPOCHS)
 
 
 def train(args, cfg=None, i=0):
+    print("Start running with config: ", args.cfg_file)
     # Load config file.
     if cfg is None:
         cfg = load_config(args)
@@ -393,7 +400,6 @@ def train(args, cfg=None, i=0):
     # if torch.cuda.device_count() > 1:
     #     model = torch.nn.DataParallel(model)
     model.to(device)
-
     # Get optimizer and loss criteria according to the config file.
     optimizer = construct_optimizer(optim_params, cfg)
     epoch = 0
@@ -406,6 +412,9 @@ def train(args, cfg=None, i=0):
             writer_log_dir = checkpoint.load_check_point(model, cfg, optimizer)
         print(f"Loaded checkpoint for {cfg.MODEL.MODEL_NAME}")
         print_eval_final_statistics(val_loss[-1], val_acc[-1], epoch)
+        cfg.TRAIN.EPOCHS = 16
+        if epoch > 10:
+            epoch = cfg.TRAIN.EPOCHS - 1
 
     # Get data loaders.
     training_data = OCTDataset(cfg, train=True)
@@ -422,7 +431,7 @@ def train(args, cfg=None, i=0):
 
     print("Begin Training")
     # Continues tensorboard writing in case resume from checkpoint
-    if writer_log_dir is None:
+    if writer_log_dir is None or epoch > 10:
         writer = SummaryWriter()
     else:
         writer = SummaryWriter(writer_log_dir)
@@ -431,9 +440,10 @@ def train(args, cfg=None, i=0):
         epoch += 1
         # Train the model for single epoch and update the learning rate.
         try:
-            train_epoch(model, train_loader, criteria, optimizer, epoch, train_loss,
-                        epochs_times, cfg.MODEL.NUM_FEATURES_TO_PREDICT, writer, cfg.MODEL.NUM_CLASSES)
-            update_lr(optimizer, epoch, cfg)
+            if epoch < cfg.TRAIN.EPOCHS:
+                train_epoch(model, train_loader, criteria, optimizer, epoch, train_loss,
+                            epochs_times, cfg.MODEL.NUM_FEATURES_TO_PREDICT, writer, cfg.MODEL.NUM_CLASSES)
+                update_lr(optimizer, epoch, cfg)
 
             # Evaluate the model.
             if epoch % cfg.TRAIN.EVAL_PERIOD == 0 or epoch == cfg.TRAIN.EPOCHS:
@@ -470,12 +480,14 @@ def train_with_hparam_tune(args):
         return train(args, cfg)
     base_lr = [0.005, 0.0001]
     steps = [[0, 5, 12, 18], [0, 8, 16]]
-    class_weight = [True, False]
+    finetune_percent = [1, 0.75, 0.5, 0.25, 0]
+    class_weight = [False, True]
     for j, lr in enumerate(base_lr):
-        for weight in class_weight:
+        for ft in finetune_percent:
             cfg.SOLVER.BASE_LR = lr
             cfg.SOLVER.STEPS = steps[j]
-            cfg.MODEL.LOSS_CLASS_WEIGHT = weight
+            # cfg.MODEL.LOSS_CLASS_WEIGHT = weight
+            cfg.MODEL.FINETUNE_PERCENT = ft
             i += 1
             train(args, cfg, i)
 
